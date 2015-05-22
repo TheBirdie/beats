@@ -8,6 +8,7 @@ import edu.berkeley.path.beats.simulator.DemandSet;
 import edu.berkeley.path.beats.simulator.Scenario;
 import edu.berkeley.path.beats.simulator.utils.BeatsException;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.fail;
@@ -20,7 +21,7 @@ public class FrModeTest {
 
 
 
-
+    @Ignore
     @Test
     public void testWithProperties() throws Exception {
         try {
