@@ -6,6 +6,9 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.Spliterator;
+
+import org.apache.commons.lang.NotImplementedException;
 
 /**
  * A bounded set of integers
@@ -15,6 +18,10 @@ public class ArraySet implements Set<Integer>,Serializable {
 
 	private boolean [] elems;
 
+	@Override
+	public Spliterator<Integer> spliterator() {
+		throw new NotImplementedException();
+	}
 	/**
 	 * Creates an empty set
 	 * @param max the maximal element, that is, all elements are in {0, 1, ..., max - 1}
