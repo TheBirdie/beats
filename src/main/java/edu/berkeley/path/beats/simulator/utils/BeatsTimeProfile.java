@@ -1,9 +1,6 @@
 package edu.berkeley.path.beats.simulator.utils;
 
 import edu.berkeley.path.beats.simulator.Clock;
-import edu.berkeley.path.beats.simulator.FundamentalDiagram;
-import edu.berkeley.path.beats.simulator.Scenario;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 
