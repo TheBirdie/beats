@@ -636,6 +636,31 @@ public class Scenario extends edu.berkeley.path.beats.jaxb.Scenario implements S
         return true;
     }
 
+    public float advanceNSecondsAndCollectDensityIntegral(double nsec) throws BeatsException{
+
+        if(!scenario_locked)
+            throw new BeatsException("Run not initialized. Use initialize_run() first.");
+
+        if(!BeatsMath.isintegermultipleof(nsec,runParam.dt_sim))
+            throw new BeatsException("nsec (" + nsec + ") must be an interger multiple of simulation dt (" + runParam.dt_sim + ").");
+        edu.berkeley.path.beats.jaxb.Network network = getNetworks().get(0);
+        int nsteps = BeatsMath.round(nsec/runParam.dt_sim);
+        float integralDensity = 0;
+        int i;
+        int numVehTypes = get.numVehicleTypes();
+        for(int k=0;k<nsteps;k++){
+            updater.update();
+            for(i=0;i<network.getLinkList().getLink().size();i++){
+                Link link = (Link) network.getLinkList().getLink().get(i);
+                Double [] linkdensity = link.getDensityInVeh(0);
+                if(linkdensity != null)
+                    for(int j=0;j<numVehTypes;j++)
+                    	integralDensity += linkdensity[j];
+            }
+        }
+        return integralDensity;
+    }
+
 	/////////////////////////////////////////////////////////////////////
 	// serialization
 	/////////////////////////////////////////////////////////////////////
