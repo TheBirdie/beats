@@ -249,6 +249,12 @@ public final class ControllerSet extends edu.berkeley.path.beats.jaxb.Controller
         return X;
     }
 
+    public int getNumControllers() {
+    	return controllers.size();
+    }
+    public Controller getNthController(int i) {
+    	return controllers.get(i);
+    }
 	public Controller getControllerWithId(int cid){
 		for(Controller c : controllers)
 			if(c.getId()==cid)
