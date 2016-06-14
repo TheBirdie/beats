@@ -26,6 +26,7 @@
 
 package edu.berkeley.path.beats.simulator;
 
+import edu.berkeley.path.beats.link.Type;
 import edu.berkeley.path.beats.jaxb.SwitchRatio;
 import edu.berkeley.path.beats.simulator.linkBehavior.LinkBehaviorCTM;
 import edu.berkeley.path.beats.simulator.utils.BeatsErrorLog;
@@ -43,8 +44,6 @@ import java.util.List;
 public class Link extends edu.berkeley.path.beats.jaxb.Link implements Serializable {
 
     private static final long serialVersionUID = 6752301095198199827L;
-
-    public enum Type {onramp,offramp,source,freeway,hov,intersection_approach,street,other,undefined}
 
     protected Scenario myScenario;
     protected Network myNetwork;

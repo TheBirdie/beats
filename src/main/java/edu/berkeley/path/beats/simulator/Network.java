@@ -26,6 +26,7 @@
 
 package edu.berkeley.path.beats.simulator;
 
+import edu.berkeley.path.beats.link.Type;
 import edu.berkeley.path.beats.simulator.utils.BeatsException;
 
 import java.io.Serializable;
@@ -175,7 +176,7 @@ public final class Network extends edu.berkeley.path.beats.jaxb.Network implemen
             if (bNode.nIn==0) {
                 boolean all_fwy = true;
                 for(Link link :  bNode.output_link)
-                    all_fwy &= link.link_type==Link.Type.freeway;
+                    all_fwy &= link.link_type==Type.freeway;
                 if(all_fwy)
                     x.add(bNode);
             }

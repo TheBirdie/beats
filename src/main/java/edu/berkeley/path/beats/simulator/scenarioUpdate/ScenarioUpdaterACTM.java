@@ -1,6 +1,11 @@
 package edu.berkeley.path.beats.simulator.scenarioUpdate;
 
-import edu.berkeley.path.beats.simulator.*;
+import edu.berkeley.path.beats.link.Type;
+import edu.berkeley.path.beats.simulator.FundamentalDiagram;
+import edu.berkeley.path.beats.simulator.Link;
+import edu.berkeley.path.beats.simulator.Network;
+import edu.berkeley.path.beats.simulator.Node;
+import edu.berkeley.path.beats.simulator.Scenario;
 import edu.berkeley.path.beats.simulator.linkBehavior.LinkBehaviorACTM;
 import edu.berkeley.path.beats.simulator.linkBehavior.LinkBehaviorCTM;
 import edu.berkeley.path.beats.simulator.nodeBeahavior.Node_FlowSolver;
@@ -48,9 +53,9 @@ public class ScenarioUpdaterACTM extends ScenarioUpdaterAbstract implements Seri
 
             for(int i=0;i<current_node.output_link.length;i++){
                 Link link = current_node.output_link[i];
-                if(link.link_type==Link.Type.freeway)
+                if(link.link_type==Type.freeway)
                     fwynode.dn_ml = link;
-                if(link.link_type==Link.Type.offramp){
+                if(link.link_type==Type.offramp){
                     fwynode.offramp = link;
                     fwynode.fr_index = i;
                 }
@@ -58,9 +63,9 @@ public class ScenarioUpdaterACTM extends ScenarioUpdaterAbstract implements Seri
 
             for(int i=0;i<current_node.input_link.length;i++) {
                 Link link = current_node.input_link[i];
-                if (link.link_type == Link.Type.onramp)
+                if (link.link_type == Type.onramp)
                     fwynode.onramp = link;
-                if (link.link_type == Link.Type.freeway){
+                if (link.link_type == Type.freeway){
                     fwynode.up_ml = link;
                     fwynode.up_ml_index = i;
                 }
