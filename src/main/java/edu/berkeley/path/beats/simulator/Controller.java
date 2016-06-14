@@ -337,6 +337,10 @@ public class Controller {
 	public int getNumActuators() {
 		return actuators==null ? 0 : actuators.size();
 	}
+	
+	public Actuator getNthActuator(int i) {
+		return actuators.get(i);
+	}
 
 	public int getNumSensors() {
 		return sensors==null ? 0 : sensors.size();
