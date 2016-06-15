@@ -48,7 +48,7 @@ public final class ControllerSet extends edu.berkeley.path.beats.jaxb.Controller
 	// protected interface
 	/////////////////////////////////////////////////////////////////////
 	
-	protected ArrayList<Controller> get_Controllers(){
+	public ArrayList<Controller> get_Controllers(){
 		return controllers;
 	}
 	
