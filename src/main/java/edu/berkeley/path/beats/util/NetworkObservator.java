@@ -117,10 +117,13 @@ public class NetworkObservator {
             boolean isFirst = true;
             
             for (int cell = indexes.getFirst(); cell < indexes.getSecond(); ++cell) {
-                observation[cell][0] = link.getDensityInVeh(0, 0) / link._length;
+                observation[cell][0] = 100 * link.getDensityInVeh(0, 0) / link._length;
                 observation[cell][1] = LinkHasOfframp(link) ? 1.0 : 0.0;
                 if (isFirst)
-                    observation[cell][2] = Math.log(1. + LinkOnrampQueue(link));
+                {
+                    double queue = LinkOnrampQueue(link);
+                    observation[cell][2] = Math.log(1. + queue);
+                }
                 else
                     observation[cell][2] = 0.;
                 isFirst = false;
