@@ -35,6 +35,7 @@ import javax.xml.bind.Marshaller;
 
 import edu.berkeley.path.beats.Jaxb;
 import edu.berkeley.path.beats.jaxb.*;
+import edu.berkeley.path.beats.link.Type;
 import edu.berkeley.path.beats.simulator.output.OutputWriterBase;
 import edu.berkeley.path.beats.simulator.output.OutputWriterFactory;
 import edu.berkeley.path.beats.simulator.scenarioUpdate.ScenarioUpdaterACTM;
@@ -636,8 +637,30 @@ public class Scenario extends edu.berkeley.path.beats.jaxb.Scenario implements S
         return true;
     }
 
-    public float advanceNSecondsAndCollectDensityIntegral(double nsec) throws BeatsException{
-
+    public float ComputeTotalDensity(edu.berkeley.path.beats.jaxb.Network network) {
+    	float integralDensity = 0;
+        int numVehTypes = get.numVehicleTypes();
+        for(int i=0;i<network.getLinkList().getLink().size();i++){
+            Link link = (Link) network.getLinkList().getLink().get(i);
+            Double [] linkdensity = link.getDensityInVeh(0);
+            if(linkdensity != null)
+                for(int j=0;j<numVehTypes;j++)
+                	integralDensity += linkdensity[j];
+        }
+        return integralDensity;
+    }
+    public float ComputeTotalOutflow(edu.berkeley.path.beats.jaxb.Network network) {
+    	float outFlow = 0;
+        for(int i=0;i<network.getLinkList().getLink().size();i++){
+        	Link link = (Link) network.getLinkList().getLink().get(i);
+        	if (link.issink || link.link_type.compareTo(Type.offramp) == 0)
+        		for (int j = 0; j < link.outflow.length; ++j)
+        			for (int k = 0; k < link.outflow[j].length; ++k)
+        				outFlow += link.outflow[j][k];
+        }
+        return outFlow;
+    }
+    public float advanceNSecondsAndCollectIntegralOutflow(double nsec) throws BeatsException{
         if(!scenario_locked)
             throw new BeatsException("Run not initialized. Use initialize_run() first.");
 
@@ -645,20 +668,12 @@ public class Scenario extends edu.berkeley.path.beats.jaxb.Scenario implements S
             throw new BeatsException("nsec (" + nsec + ") must be an interger multiple of simulation dt (" + runParam.dt_sim + ").");
         edu.berkeley.path.beats.jaxb.Network network = getNetworks().get(0);
         int nsteps = BeatsMath.round(nsec/runParam.dt_sim);
-        float integralDensity = 0;
-        int i;
-        int numVehTypes = get.numVehicleTypes();
+        float totalOutflow = 0;
         for(int k=0;k<nsteps;k++){
             updater.update();
-            for(i=0;i<network.getLinkList().getLink().size();i++){
-                Link link = (Link) network.getLinkList().getLink().get(i);
-                Double [] linkdensity = link.getDensityInVeh(0);
-                if(linkdensity != null)
-                    for(int j=0;j<numVehTypes;j++)
-                    	integralDensity += linkdensity[j];
-            }
+            totalOutflow += ComputeTotalOutflow(network);
         }
-        return integralDensity;
+        return totalOutflow;
     }
 
 	/////////////////////////////////////////////////////////////////////

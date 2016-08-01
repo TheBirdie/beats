@@ -1,5 +1,6 @@
 package edu.berkeley.path.beats.util;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +14,9 @@ import edu.berkeley.path.beats.simulator.Link;
 import edu.berkeley.path.beats.simulator.Network;
 import edu.berkeley.path.beats.simulator.Scenario;
 import edu.berkeley.path.beats.actuator.ActuatorRampMeter;
+import edu.berkeley.path.beats.jaxb.Demand;
+import edu.berkeley.path.beats.jaxb.DemandProfile;
+import edu.berkeley.path.beats.jaxb.DemandSet;
 import edu.berkeley.path.beats.link.Type;
 
 public class NetworkObservator {
@@ -23,15 +27,19 @@ public class NetworkObservator {
     HashMap<Link, Pair<Integer, Integer>> _linkToIdx;
     double _totalLength;
     double _discretSpace;
+    double _densityMean;
+    double _densityVar;
 
     double[] _observationDensity;
     double[] _observationOnramps;
     double[] _observationOfframps;
 
-    public NetworkObservator(Scenario scenario, Network net, double discretizationSpace) {
+    public NetworkObservator(Scenario scenario, Network net, double discretizationSpace, double mean, double var) {
         this._net = net;
         this._scenario = scenario;
         this._discretSpace = discretizationSpace;
+        this._densityMean = mean;
+        this._densityVar = var;
         ComputeHighwayLinks();
         GenerateLinkToIdxMapping();
         GenerateActuatorsArray();
@@ -117,7 +125,7 @@ public class NetworkObservator {
             boolean isFirst = true;
             
             for (int cell = indexes.getFirst(); cell < indexes.getSecond(); ++cell) {
-                observation[cell][0] = 100 * link.getDensityInVeh(0, 0) / link._length;
+                observation[cell][0] = (link.getDensityInVeh(0, 0) / link._length - _densityMean) / _densityVar;
                 observation[cell][1] = LinkHasOfframp(link) ? 1.0 : 0.0;
                 if (isFirst)
                 {
@@ -130,10 +138,70 @@ public class NetworkObservator {
             }
         }
     }
+    public void ComputeFreewaySpeeds(double[] speeds) {
+        /*
+        A [l, 4] array for all the HWY length with l = length of the highway
+            Dim0: density
+            Dim1: 0/1 presence of offramp
+            Dim2: on-ramp queue
+        */
+
+        for (Entry<Link, Pair<Integer, Integer>> entry : _linkToIdx.entrySet()) {
+            Link link = entry.getKey();
+            Pair<Integer, Integer> indexes = entry.getValue();
+
+            for (int cell = indexes.getFirst(); cell < indexes.getSecond(); ++cell) {
+                speeds[cell] = link.computeSpeedInMPS(0);
+            }
+        }
+    }
     public void SetActuatorValues(double[] actions) {
         for (int i = 0; i < _actuators.size(); ++i) {
             actions[i] = Double.max(actions[i], 0d);
             _actuators.get(i).setMeteringRateInVPH(actions[i] * 100);
         }
+    }
+    public double ComputeIntegralDensity() {
+    	double integralDensity = 0;
+    	int numVehTypes = _scenario.get.numVehicleTypes();
+        for(int i=0;i<_net.getLinkList().getLink().size();i++){
+            Link link = (Link) _net.getLinkList().getLink().get(i);
+            Double [] linkdensity = link.getDensityInVeh(0);
+            if(linkdensity != null)
+                for(int j=0;j<numVehTypes;j++)
+                	integralDensity += linkdensity[j];
+        }
+        return integralDensity;
+    }
+    public double SetAllDemandToMaximum() {
+    	double sumAllDemand = 0.0;
+    	for(int i=0;i<_net.getLinkList().getLink().size();i++){
+            Link link = (Link) _net.getLinkList().getLink().get(i);
+            edu.berkeley.path.beats.simulator.DemandProfile demandProfile = link.getDemandProfile();
+            if (demandProfile != null) {
+	            List<Demand> demandsList = demandProfile.getDemand();
+	            for (Demand d: demandsList) {
+	                double max = 0;
+	                int count = 0;
+	            	// <demand vehicle_type_id="1">1158.000,1158.000,1158.0...
+	            	Data1D data1d = new Data1D(d.getContent(),",");		
+	        		if (!data1d.isEmpty()) {
+	        			StringBuilder sb = new StringBuilder();
+	        			for (BigDecimal val : data1d.getData()) {
+	        				max = Math.max(max, val.doubleValue());
+	        				++count;
+	        			}
+	        			for (int j = 0; j < count; ++j)
+	        			{
+	        				if (0 < sb.length()) sb.append(',');
+	        				sb.append(max);
+	        			}
+	        			d.setContent(sb.toString());
+	        		}
+	        		sumAllDemand += max;
+	            }
+            }
+    	}
+    	return sumAllDemand;
     }
 }
