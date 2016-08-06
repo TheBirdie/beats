@@ -43,6 +43,8 @@ import edu.berkeley.path.beats.simulator.scenarioUpdate.ScenarioUpdaterAbstract;
 import edu.berkeley.path.beats.simulator.scenarioUpdate.ScenarioUpdaterFrFlow;
 import edu.berkeley.path.beats.simulator.scenarioUpdate.ScenarioUpdaterStandard;
 import edu.berkeley.path.beats.simulator.utils.*;
+import edu.berkeley.path.beats.util.NetworkObservator;
+
 import org.apache.log4j.Logger;
 
 import edu.berkeley.path.beats.calibrator.FDCalibrator;
@@ -660,7 +662,7 @@ public class Scenario extends edu.berkeley.path.beats.jaxb.Scenario implements S
         }
         return outFlow;
     }
-    public float advanceNSecondsAndCollectIntegralOutflow(double nsec) throws BeatsException{
+    public float advanceNSecondsAndCollectIntegralOutflow(double nsec, double[] localOutflow, NetworkObservator observator) throws BeatsException{
         if(!scenario_locked)
             throw new BeatsException("Run not initialized. Use initialize_run() first.");
 
@@ -672,6 +674,7 @@ public class Scenario extends edu.berkeley.path.beats.jaxb.Scenario implements S
         for(int k=0;k<nsteps;k++){
             updater.update();
             totalOutflow += ComputeTotalOutflow(network);
+            observator.CollectLocalIntegralOutflow(localOutflow);
         }
         return totalOutflow;
     }

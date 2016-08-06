@@ -54,6 +54,27 @@ public class NetworkObservator {
         }
         return null;
     }
+    public void CollectLocalIntegralOutflow(double[] localDensity) {
+    	int onramp_idx = 0;
+    	for (Link link: _highwayLinks) {
+    		Link[] output_links = link.getEnd_node().output_link;
+    		Link[] input_links = link.getBegin_node().input_link;
+    		// Next onramp idx if we are at an onramp
+    		for (Link input_link: input_links)
+    			if (input_link.link_type.compareTo(Type.onramp) == 0)
+    				++onramp_idx;
+    		double outflow_here = 0;
+    		for (Link output_link: output_links)
+    			if (output_link.link_type.compareTo(Type.offramp) == 0 || output_link.issink)
+            		for (int j = 0; j < output_link.outflow.length; ++j)
+            			for (int k = 0; k < output_link.outflow[j].length; ++k)
+            				outflow_here += output_link.outflow[j][k];
+    		if (onramp_idx < localDensity.length) // Skip after last onramp
+    			localDensity[onramp_idx] += outflow_here;
+			if (onramp_idx > 0) // Skip before first onramp
+				localDensity[onramp_idx-1] += outflow_here;
+    	}
+    }
     void ComputeHighwayLinks() {
         Link fwy_any_link = GetAnyFreewayLink();
         Link cur_link = fwy_any_link;
