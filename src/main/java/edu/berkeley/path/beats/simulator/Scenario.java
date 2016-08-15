@@ -533,6 +533,20 @@ public class Scenario extends edu.berkeley.path.beats.jaxb.Scenario implements S
 
 	}
 
+	public OutputWriterBase create_writer(int rep) throws BeatsException{
+		// output writer properties
+		Properties owr_props = new Properties();
+		if (null != runParam.outprefix)
+			owr_props.setProperty("prefix", runParam.outprefix);
+		if (null != runParam.outtype)
+			owr_props.setProperty("type",runParam.outtype);
+		OutputWriterBase outputwriter = null;
+		if (runParam.writefiles){
+			outputwriter = OutputWriterFactory.getWriter(this, owr_props, runParam.dt_output, runParam.outsteps, runParam.t_start_output);
+			outputwriter.open(rep);
+		}
+		return outputwriter;
+	}
 	/////////////////////////////////////////////////////////////////////
 	// start-to-end run
 	/////////////////////////////////////////////////////////////////////
@@ -545,21 +559,9 @@ public class Scenario extends edu.berkeley.path.beats.jaxb.Scenario implements S
 		logger.info("Simulation period: [" + runParam.t_start_output + ":" + runParam.dt_sim + ":" + runParam.t_end_output + "]");
 		logger.info("Output period: [" + runParam.t_start_output + ":" + runParam.dt_output + ":" + runParam.t_end_output + "]");
 
-		// output writer properties
-		Properties owr_props = new Properties();
-		if (null != runParam.outprefix)
-			owr_props.setProperty("prefix", runParam.outprefix);
-		if (null != runParam.outtype)
-			owr_props.setProperty("type",runParam.outtype);
-
 		// loop through simulation runs ............................
 		for(int i=0;i<runParam.numReps;i++){
-
-			OutputWriterBase outputwriter = null;
-			if (runParam.writefiles){
-				outputwriter = OutputWriterFactory.getWriter(this, owr_props, runParam.dt_output, runParam.outsteps, runParam.t_start_output);
-				outputwriter.open(i);
-			}
+			OutputWriterBase outputwriter = create_writer(i);
 
             try{
 
