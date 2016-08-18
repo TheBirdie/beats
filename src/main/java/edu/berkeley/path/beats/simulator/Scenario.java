@@ -108,6 +108,8 @@ public class Scenario extends edu.berkeley.path.beats.jaxb.Scenario implements S
     // api
     public ScenarioGetApi get;
     public ScenarioSetApi set;
+    
+    protected OutputWriterBase outputwriter;
 
 	/////////////////////////////////////////////////////////////////////
 	// populate / reset / validate
@@ -245,6 +247,12 @@ public class Scenario extends edu.berkeley.path.beats.jaxb.Scenario implements S
 
 	}
 
+	public void closeWriter() throws BeatsException {
+        if (outputwriter != null) {
+        	outputwriter.close();
+        	outputwriter = null;
+        }
+	}
 	/** Prepare scenario for simulation:
 	 * set the state of the scenario to the initial condition
 	 * sample profiles
@@ -252,7 +260,7 @@ public class Scenario extends edu.berkeley.path.beats.jaxb.Scenario implements S
 	 * @return success		A boolean indicating whether the scenario was successfuly reset.
 	 */
 	public void reset() throws BeatsException {
-
+		closeWriter();
 		started_writing = false;
 	    global_demand_knob = 1d;
 
@@ -299,6 +307,7 @@ public class Scenario extends edu.berkeley.path.beats.jaxb.Scenario implements S
 
         if(perf_calc!=null)
             perf_calc.reset();
+
 
 	}
 
@@ -540,11 +549,8 @@ public class Scenario extends edu.berkeley.path.beats.jaxb.Scenario implements S
 			owr_props.setProperty("prefix", runParam.outprefix);
 		if (null != runParam.outtype)
 			owr_props.setProperty("type",runParam.outtype);
-		OutputWriterBase outputwriter = null;
-		if (runParam.writefiles){
-			outputwriter = OutputWriterFactory.getWriter(this, owr_props, runParam.dt_output, runParam.outsteps, runParam.t_start_output);
-			outputwriter.open(rep);
-		}
+		OutputWriterBase outputwriter = OutputWriterFactory.getWriter(this, owr_props, runParam.dt_output, runParam.outsteps, runParam.t_start_output);
+		outputwriter.open(rep);
 		return outputwriter;
 	}
 	/////////////////////////////////////////////////////////////////////
@@ -561,7 +567,9 @@ public class Scenario extends edu.berkeley.path.beats.jaxb.Scenario implements S
 
 		// loop through simulation runs ............................
 		for(int i=0;i<runParam.numReps;i++){
-			OutputWriterBase outputwriter = create_writer(i);
+			OutputWriterBase outputwriter = null;
+			if (runParam.writefiles)
+				outputwriter = create_writer(i);
 
             try{
 
@@ -664,7 +672,7 @@ public class Scenario extends edu.berkeley.path.beats.jaxb.Scenario implements S
         }
         return outFlow;
     }
-    public float advanceNSecondsAndCollectIntegralOutflow(double nsec, double[] localOutflow, NetworkObservator observator) throws BeatsException{
+    public float advanceNSecondsAndCollectIntegralOutflow(double nsec, double[] localOutflow, NetworkObservator observator, boolean writeOutput) throws BeatsException{
         if(!scenario_locked)
             throw new BeatsException("Run not initialized. Use initialize_run() first.");
 
@@ -673,8 +681,21 @@ public class Scenario extends edu.berkeley.path.beats.jaxb.Scenario implements S
         edu.berkeley.path.beats.jaxb.Network network = getNetworks().get(0);
         int nsteps = BeatsMath.round(nsec/runParam.dt_sim);
         float totalOutflow = 0;
-        for(int k=0;k<nsteps;k++){
+        if (writeOutput && outputwriter == null)
+        	outputwriter = create_writer(0);
+
+        for(int k=0;k<nsteps;k++){// export initial condition
+            if(outputwriter!=null && !started_writing && BeatsMath.equals(clock.getT(), outputwriter.outStart) ){
+                recordstate(writeOutput,outputwriter,false);
+                started_writing = true;
+            }
+
+            // update scenario
             updater.update();
+
+            if(outputwriter!=null && started_writing && clock.getRelativeTimeStep() % outputwriter.outSteps == 0 )
+                recordstate(writeOutput,outputwriter,true);
+
             totalOutflow += ComputeTotalOutflow(network);
             observator.CollectLocalIntegralOutflow(localOutflow);
         }
